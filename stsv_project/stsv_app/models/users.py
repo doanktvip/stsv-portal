@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from .core import Faculty, Major, Cohort
 
 
+# Tài khoản đăng nhập hệ thống, chứa username, password, email, role.
 class User(AbstractUser):
     class Role(models.TextChoices):
         STUDENT = "STUDENT", "Sinh viên"
@@ -13,6 +14,7 @@ class User(AbstractUser):
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.STUDENT)
 
 
+# Quản lý thiết bị của người dùng (dùng để gửi Push Notification tới điện thoại/trình duyệt).
 class UserDevice(models.Model):
     class OS(models.TextChoices):
         IOS = "IOS", "iOS"
@@ -26,6 +28,7 @@ class UserDevice(models.Model):
     calendar_sync_token = models.CharField(max_length=500, blank=True, null=True)
 
 
+# Hồ sơ chi tiết của Sinh viên (mã SV, ngày sinh, lớp quản lý,...), liên kết 1-1 với User
 class StudentProfile(models.Model):
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="student_profile"
@@ -50,6 +53,7 @@ class StudentProfile(models.Model):
         return f"{self.student_id} - {self.full_name}"
 
 
+# Hồ sơ chi tiết của Giảng viên.
 class LecturerProfile(models.Model):
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="lecturer_profile"
@@ -65,6 +69,7 @@ class LecturerProfile(models.Model):
         return self.full_name
 
 
+# Hồ sơ của các Tổ chức/Câu lạc bộ/Phòng ban trong trường.
 class OrgProfile(models.Model):
     class OrgType(models.TextChoices):
         FACULTY = "FACULTY", "Cấp Khoa"

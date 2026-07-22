@@ -1,6 +1,7 @@
 from django.db import models
 
 
+# Yêu cầu dịch vụ hành chính của sinh viên (Xin giấy xác nhận sinh viên, làm lại thẻ, bảng điểm,...).
 class ServiceRequest(models.Model):
     class ServiceType(models.TextChoices):
         ENROLLMENT_CERT = "ENROLLMENT_CERT", "Giấy xác nhận sinh viên"
@@ -30,6 +31,7 @@ class ServiceRequest(models.Model):
         return f"Request {self.id} - {self.student.student_id} - {self.service_type}"
 
 
+# Báo cáo hỏng hóc cơ sở vật chất (hỏng quạt, hỏng máy chiếu phòng học).
 class FacilityReport(models.Model):
     class Priority(models.TextChoices):
         LOW = "LOW", "Thấp"
@@ -68,6 +70,7 @@ class FacilityReport(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 
+# Các khiếu nại, thắc mắc chung gửi lên Ban quản trị.
 class Complaint(models.Model):
     class Priority(models.TextChoices):
         LOW = "LOW", "Thấp"

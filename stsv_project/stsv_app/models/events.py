@@ -1,6 +1,7 @@
 from django.db import models
 
 
+# Danh mục sự kiện (Hội thảo, Tình nguyện, Giải trí,...).
 class EventCategory(models.Model):
     name = models.CharField(max_length=255)
     criterion = models.ForeignKey(
@@ -11,6 +12,7 @@ class EventCategory(models.Model):
         return self.name
 
 
+# Thông tin chi tiết của sự kiện (thời gian, địa điểm, số điểm rèn luyện được cộng).
 class Event(models.Model):
     class Status(models.TextChoices):
         PENDING = "PENDING", "Chờ duyệt"
@@ -47,12 +49,14 @@ class Event(models.Model):
         return self.title
 
 
+# Các phiên điểm danh của sự kiện (VD: Sự kiện diễn ra 2 ngày thì có 2 phiên điểm danh).
 class CheckInSession(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     dynamic_code = models.CharField(max_length=255, db_index=True)
     expires_at = models.DateTimeField()
 
 
+# Thông tin đăng ký tham gia sự kiện của sinh viên (đã duyệt, đã tham gia, vắng mặt).
 class EventRegistration(models.Model):
     class Status(models.TextChoices):
         REGISTERED = "REGISTERED", "Đã đăng ký"
@@ -72,6 +76,7 @@ class EventRegistration(models.Model):
     registered_at = models.DateTimeField(auto_now_add=True)
 
 
+# Hồ sơ/Sổ Đoàn viên của sinh viên.
 class YouthUnionRecord(models.Model):
     class SyncStatus(models.TextChoices):
         SYNCED = "SYNCED", "Đã đồng bộ"

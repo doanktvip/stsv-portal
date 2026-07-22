@@ -4,6 +4,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.core.validators import MinValueValidator
 
 
+# Khoản thu phí (Học phí kỳ 1, phí BHYT, phí làm thẻ,...).
 class Fee(models.Model):
     class FeeType(models.TextChoices):
         TUITION = "TUITION", "Học phí"
@@ -27,6 +28,7 @@ class Fee(models.Model):
         return f"{self.title} - {self.amount}"
 
 
+# Giao dịch thanh toán của sinh viên (thanh toán qua VNPay, Momo, chuyển khoản,...).
 class Payment(models.Model):
     class Status(models.TextChoices):
         PENDING = "PENDING", "Chờ thanh toán"

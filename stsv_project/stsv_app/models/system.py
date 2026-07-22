@@ -1,6 +1,7 @@
 from django.db import models
 
 
+# Cấu hình chung của hệ thống (VD: Cho phép đăng ký môn không, thời gian mở cổng,...).
 class SystemConfig(models.Model):
     key = models.CharField(max_length=100, unique=True)
     value = models.CharField(max_length=255)
@@ -11,6 +12,7 @@ class SystemConfig(models.Model):
         return self.key
 
 
+# Các mẫu thông báo có sẵn.
 class NotificationTemplate(models.Model):
     class Type(models.TextChoices):
         REMINDER = "REMINDER", "Nhắc nhở"
@@ -29,6 +31,7 @@ class NotificationTemplate(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
+# Thông báo cụ thể gửi đến hộp thư/app của người dùng (chuông thông báo).
 class UserNotification(models.Model):
     user = models.ForeignKey(
         "stsv_app.User", on_delete=models.CASCADE, related_name="notifications"

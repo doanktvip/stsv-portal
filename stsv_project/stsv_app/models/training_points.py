@@ -1,6 +1,7 @@
 from django.db import models
 
 
+# Các tiêu chí cộng/trừ điểm rèn luyện (VD: Tham gia NCKH được cộng 5đ).
 class TrainingCriterion(models.Model):
     code = models.CharField(max_length=20, unique=True)
     name = models.CharField(max_length=255)
@@ -10,6 +11,7 @@ class TrainingCriterion(models.Model):
         return self.name
 
 
+# Tổng điểm rèn luyện của sinh viên trong một học kỳ cụ thể.
 class StudentSemesterPoint(models.Model):
     class Status(models.TextChoices):
         DRAFT = "DRAFT", "Nháp"
@@ -36,6 +38,7 @@ class StudentSemesterPoint(models.Model):
     criterion_5_score = models.IntegerField(default=0)
 
 
+# Minh chứng minh họa (hình ảnh, giấy khen) mà sinh viên tải lên để xin cộng điểm.
 class PointProof(models.Model):
     class Status(models.TextChoices):
         PENDING = "PENDING", "Chờ duyệt"
@@ -52,6 +55,7 @@ class PointProof(models.Model):
     )
 
 
+# Lịch sử các lần cộng/trừ điểm rèn luyện để dễ dàng đối soát.
 class PointHistory(models.Model):
     student = models.ForeignKey("stsv_app.StudentProfile", on_delete=models.CASCADE)
     semester = models.ForeignKey("stsv_app.Semester", on_delete=models.CASCADE)

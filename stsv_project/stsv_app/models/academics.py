@@ -2,6 +2,7 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 
+# Lưu lịch sử đồng bộ dữ liệu từ hệ thống của trường (để biết lúc nào lấy điểm, lấy thời khóa biểu bị lỗi hay thành công).
 class IntegrationSyncLog(models.Model):
     class SyncType(models.TextChoices):
         STUDENTS = "STUDENTS", "Sinh viên"
@@ -20,6 +21,7 @@ class IntegrationSyncLog(models.Model):
     synced_at = models.DateTimeField(auto_now_add=True)
 
 
+# Cấu hình quy tắc đổi điểm từ thang 10 sang thang 4 và điểm chữ (A, B, C, D, F).
 class GradeConversionRule(models.Model):
     class Classification(models.TextChoices):
         PASS = "PASS", "Đạt"
@@ -44,6 +46,7 @@ class GradeConversionRule(models.Model):
     classification = models.CharField(max_length=20, choices=Classification.choices)
 
 
+# Thông tin môn học (số tín chỉ, môn tiên quyết).
 class Subject(models.Model):
     subject_code = models.CharField(max_length=20, unique=True)
     name = models.CharField(max_length=255)
@@ -57,6 +60,7 @@ class Subject(models.Model):
         return self.name
 
 
+# Chương trình đào tạo. Quy định chuyên ngành nào, khóa nào phải học những môn gì, vào kỳ nào.
 class EducationProgram(models.Model):
     major = models.ForeignKey("stsv_app.Major", on_delete=models.CASCADE)
     cohort = models.ForeignKey("stsv_app.Cohort", on_delete=models.CASCADE)
@@ -65,6 +69,7 @@ class EducationProgram(models.Model):
     is_mandatory = models.BooleanField(default=True)
 
 
+# Thông tin Học kỳ (Kỳ 1 năm 2023-2024, thời gian bắt đầu/kết thúc).
 class Semester(models.Model):
     code = models.CharField(max_length=20, unique=True)
     start_date = models.DateField()
@@ -74,6 +79,7 @@ class Semester(models.Model):
         return self.code
 
 
+# Lớp học phần (Ví dụ: Lớp C++ sáng thứ 2).
 class CourseClass(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
@@ -90,6 +96,7 @@ class CourseClass(models.Model):
         return f"{self.subject.name} - {self.class_code}"
 
 
+# Các thành phần điểm của 1 môn (Điểm danh 10%, Giữa kỳ 30%, Cuối kỳ 60%).
 class ScoreComponent(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
@@ -101,6 +108,7 @@ class ScoreComponent(models.Model):
         return f"{self.subject.name} - {self.name} ({self.weight_percentage}%)"
 
 
+# Thông tin sinh viên đăng ký lớp học phần và điểm tổng kết môn học.
 class StudentCourse(models.Model):
     student = models.ForeignKey("stsv_app.StudentProfile", on_delete=models.CASCADE)
     course_class = models.ForeignKey(CourseClass, on_delete=models.CASCADE)
@@ -117,6 +125,7 @@ class StudentCourse(models.Model):
         return f"{self.student.student_id} - {self.course_class.class_code}"
 
 
+# Điểm chi tiết cho từng thành phần (sinh viên A được 8đ giữa kỳ).
 class StudentScoreDetail(models.Model):
     student_course = models.ForeignKey(StudentCourse, on_delete=models.CASCADE)
     score_component = models.ForeignKey(ScoreComponent, on_delete=models.CASCADE)
@@ -128,6 +137,7 @@ class StudentScoreDetail(models.Model):
     is_deleted = models.BooleanField(default=False, db_index=True)
 
 
+# Tổng kết GPA, tín chỉ, điểm rèn luyện của sinh viên sau mỗi học kỳ.
 class StudentSemesterSummary(models.Model):
     student = models.ForeignKey("stsv_app.StudentProfile", on_delete=models.CASCADE)
     semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
@@ -140,6 +150,7 @@ class StudentSemesterSummary(models.Model):
     cumulative_training_points = models.IntegerField()
 
 
+# Thời khóa biểu, lịch học và lịch thi của từng lớp học phần.
 class Schedule(models.Model):
     class Type(models.TextChoices):
         CLASS = "CLASS", "Học trên lớp"
