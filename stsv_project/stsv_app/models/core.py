@@ -29,3 +29,27 @@ class Cohort(models.Model):
 
     def __str__(self):
         return self.code
+
+
+# Lớp sinh hoạt (Lớp hành chính, VD: K25-CNTT-01). 
+class HomeroomClass(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    major = models.ForeignKey(Major, on_delete=models.CASCADE, related_name="homeroom_classes")
+    cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE, related_name="homeroom_classes")
+    advisor = models.ForeignKey(
+        "stsv_app.LecturerProfile", 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name="advised_classes"
+    )
+    president = models.ForeignKey(
+        "stsv_app.StudentProfile", 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name="presided_classes"
+    )
+
+    def __str__(self):
+        return self.name

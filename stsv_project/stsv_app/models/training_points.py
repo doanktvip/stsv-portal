@@ -16,7 +16,7 @@ class StudentSemesterPoint(models.Model):
     class Status(models.TextChoices):
         DRAFT = "DRAFT", "Nháp"
         SUBMITTED = "SUBMITTED", "Đã nộp"
-        CLASS_APPROVED = "CLASS_APPROVED", "Lớp đã duyệt"
+        CLASS_APPROVED = "CLASS_APPROVED", "Lớp trưởng đã duyệt"
         FACULTY_APPROVED = "FACULTY_APPROVED", "Khoa đã duyệt"
 
     student = models.ForeignKey(
@@ -31,11 +31,37 @@ class StudentSemesterPoint(models.Model):
     total_student_score = models.IntegerField(default=0)
     total_class_score = models.IntegerField(default=0)
     total_final_score = models.IntegerField(default=0)
-    criterion_1_score = models.IntegerField(default=0)
-    criterion_2_score = models.IntegerField(default=0)
-    criterion_3_score = models.IntegerField(default=0)
-    criterion_4_score = models.IntegerField(default=0)
-    criterion_5_score = models.IntegerField(default=0)
+    class_approved_by = models.ForeignKey(
+        "stsv_app.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="class_approved_training_points",
+    )
+    class_approved_at = models.DateTimeField(null=True, blank=True)
+    faculty_approved_by = models.ForeignKey(
+        "stsv_app.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="faculty_approved_training_points",
+    )
+    faculty_approved_at = models.DateTimeField(null=True, blank=True)
+
+
+class SemesterPointDetail(models.Model):
+    semester_point = models.ForeignKey(
+        StudentSemesterPoint,
+        on_delete=models.CASCADE,
+        related_name="details",
+    )
+    criterion = models.ForeignKey(TrainingCriterion, on_delete=models.CASCADE)
+    student_score = models.IntegerField(default=0)
+    class_score = models.IntegerField(default=0)
+    final_score = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.semester_point.student.student_id} - {self.criterion.code}"
 
 
 # Minh chứng minh họa (hình ảnh, giấy khen) mà sinh viên tải lên để xin cộng điểm.

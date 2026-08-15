@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from .core import Faculty, Major, Cohort
+from .core import Faculty, Major, Cohort, HomeroomClass
 
 
 # Tài khoản đăng nhập hệ thống, chứa username, password, email, role.
@@ -44,7 +44,9 @@ class StudentProfile(models.Model):
     cohort = models.ForeignKey(
         Cohort, on_delete=models.SET_NULL, null=True, related_name="students"
     )
-    class_name = models.CharField(max_length=100)
+    homeroom_class = models.ForeignKey(
+        HomeroomClass, on_delete=models.SET_NULL, null=True, related_name="students"
+    )
     is_youth_union_linked = models.BooleanField(default=False)
     youth_union_token = models.CharField(max_length=500, blank=True, null=True)
     last_sync_youth_union = models.DateTimeField(blank=True, null=True)

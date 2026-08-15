@@ -1,38 +1,75 @@
 from .base import BaseService
 from stsv_app.models.users import User, StudentProfile, LecturerProfile, OrgProfile
-from .exceptions import ResourceNotFoundError, ValidationError, PermissionDeniedError
-from django.contrib.auth.hashers import make_password
+from .exceptions import ResourceNotFoundError, ValidationError
 
-class UserService(BaseService):
-    @BaseService.run_in_transaction
-    def create_user(self, username, password, email, role=User.Role.STUDENT) -> User:
-        if User.objects.filter(username=username).exists():
-            raise ValidationError("Username đã tồn tại.")
-        user = User(username=username, email=email, role=role)
-        user.password = make_password(password)
-        user.save()
-        return user
 
 class StudentProfileService(BaseService):
-    def get_profile(self, user_id: int) -> StudentProfile:
+    def get_profile(self, user_or_id: User | int) -> StudentProfile:
+        lookup = (
+            {"user": user_or_id}
+            if isinstance(user_or_id, User)
+            else {"user_id": user_or_id}
+        )
         try:
-            return StudentProfile.objects.get(user_id=user_id)
+            return StudentProfile.objects.select_related(
+                "faculty", "major", "cohort", "user"
+            ).get(**lookup)
         except StudentProfile.DoesNotExist:
             raise ResourceNotFoundError("Không tìm thấy hồ sơ sinh viên.")
 
-    @BaseService.run_in_transaction
-    def create_or_update_profile(self, user_id: int, data: dict) -> StudentProfile:
-        profile, created = StudentProfile.objects.update_or_create(
-            user_id=user_id, defaults=data
+
+class LecturerProfileService(BaseService):
+    def get_profile(self, user_or_id: User | int) -> LecturerProfile:
+        lookup = (
+            {"user": user_or_id}
+            if isinstance(user_or_id, User)
+            else {"user_id": user_or_id}
         )
-        return profile
+        try:
+            return LecturerProfile.objects.select_related("faculty", "user").get(
+                **lookup
+            )
+        except LecturerProfile.DoesNotExist:
+            raise ResourceNotFoundError("Không tìm thấy hồ sơ giảng viên.")
+
 
 class OrgProfileService(BaseService):
-    def update_status(self, org_id: int, status: str):
+    def get_profile(self, user_or_id: User | int) -> OrgProfile:
+        lookup = (
+            {"user": user_or_id}
+            if isinstance(user_or_id, User)
+            else {"user_id": user_or_id}
+        )
         try:
-            org = OrgProfile.objects.get(id=org_id)
-            org.status = status
-            org.save()
-            return org
+            return OrgProfile.objects.select_related(
+                "faculty", "parent_org", "advisor", "user"
+            ).get(**lookup)
         except OrgProfile.DoesNotExist:
-            raise ResourceNotFoundError("Không tìm thấy tổ chức.")
+            raise ResourceNotFoundError("Không tìm thấy hồ sơ cán bộ tổ chức.")
+
+
+class UserService(BaseService):
+    def __init__(self):
+        self.student_service = StudentProfileService()
+        self.lecturer_service = LecturerProfileService()
+        self.org_service = OrgProfileService()
+
+    def get_user_profile(self, user: User):
+        if user.role == User.Role.STUDENT:
+            return self.student_service.get_profile(user)
+        elif user.role == User.Role.LECTURER:
+            return self.lecturer_service.get_profile(user)
+        elif user.role == User.Role.ORGOFFICER:
+            return self.org_service.get_profile(user)
+
+        return user
+
+    def change_password(self, user: User, old_password: str, new_password: str) -> None:        
+        if not user.check_password(old_password):
+            raise ValidationError("Mật khẩu hiện tại không chính xác.")
+        
+        if old_password == new_password:
+            raise ValidationError("Mật khẩu mới phải khác mật khẩu hiện tại.")
+            
+        user.set_password(new_password)
+        user.save()

@@ -1,34 +1,6 @@
 from django.db import models
+from cloudinary.models import CloudinaryField
 
-
-# Yêu cầu dịch vụ hành chính của sinh viên (Xin giấy xác nhận sinh viên, làm lại thẻ, bảng điểm,...).
-class ServiceRequest(models.Model):
-    class ServiceType(models.TextChoices):
-        ENROLLMENT_CERT = "ENROLLMENT_CERT", "Giấy xác nhận sinh viên"
-        TRANSCRIPT = "TRANSCRIPT", "Bảng điểm"
-        LEAVE_OF_ABSENCE = "LEAVE_OF_ABSENCE", "Đơn xin tạm nghỉ học"
-
-    class Status(models.TextChoices):
-        PENDING = "PENDING", "Chờ xử lý"
-        PROCESSING = "PROCESSING", "Đang xử lý"
-        READY_FOR_PICKUP = "READY_FOR_PICKUP", "Đã có kết quả"
-        DONE = "DONE", "Đã hoàn thành"
-        REJECTED = "REJECTED", "Từ chối"
-
-    student = models.ForeignKey("stsv_app.StudentProfile", on_delete=models.CASCADE)
-    service_type = models.CharField(max_length=50, choices=ServiceType.choices)
-    status = models.CharField(
-        max_length=20, choices=Status.choices, default=Status.PENDING, db_index=True
-    )
-    attached_files = models.JSONField(blank=True, null=True)
-    response_file = models.FileField(
-        upload_to="service_responses/", blank=True, null=True
-    )
-    expected_date = models.DateField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Request {self.id} - {self.student.student_id} - {self.service_type}"
 
 
 # Báo cáo hỏng hóc cơ sở vật chất (hỏng quạt, hỏng máy chiếu phòng học).
@@ -49,7 +21,9 @@ class FacilityReport(models.Model):
     )
     room = models.CharField(max_length=100)
     description = models.TextField()
-    image = models.ImageField(upload_to="facility_reports/", blank=True, null=True)
+    image = CloudinaryField(
+        "Ảnh báo cáo", folder="facility_reports", blank=True, null=True
+    )
     priority = models.CharField(
         max_length=20, choices=Priority.choices, default=Priority.LOW
     )
@@ -63,8 +37,8 @@ class FacilityReport(models.Model):
         blank=True,
         related_name="resolved_facility_reports",
     )
-    resolution_image = models.ImageField(
-        upload_to="facility_resolutions/", blank=True, null=True
+    resolution_image = CloudinaryField(
+        "Ảnh sau khắc phục", folder="facility_resolutions", blank=True, null=True
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
