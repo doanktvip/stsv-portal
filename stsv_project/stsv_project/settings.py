@@ -27,6 +27,17 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY")
 
+# Push Notification Service
+FIREBASE_CREDENTIALS = os.getenv("FIREBASE_CREDENTIALS")
+
+# Elasticsearch Configuration
+ELASTICSEARCH_DSL = {
+    'default': {
+        'hosts': 'http://localhost:9200',
+        'timeout': 30,
+    },
+}
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
@@ -48,6 +59,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "django_filters",
     "drf_yasg",
+    "django_elasticsearch_dsl",
     "stsv_app.apps.StsvAppConfig",
 ]
 
@@ -172,12 +184,35 @@ CLOUDINARY_STORAGE = {
     "API_SECRET": os.getenv("CLOUDINARY_API_SECRET"),
 }
 
-# Bắt buộc Django phải gửi file rác (Media) lên Cloudinary thay vì lưu vào ổ cứng
-DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+# Bắt buộc Django phải gửi file rác (Media) lên Cloudinary thay vì lưu vào ổ cứng (Dành cho Django 5.1+)
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 # Cấu hình giao diện Swagger để hỗ trợ dán Token (JWT)
 SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {
         "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}
     }
+}
+
+# Cấu hình MoMo
+MOMO_CONFIG = {
+    "PARTNER_CODE": os.getenv("MOMO_PARTNER_CODE", ""),
+    "ACCESS_KEY": os.getenv("MOMO_ACCESS_KEY", ""),
+    "SECRET_KEY": os.getenv("MOMO_SECRET_KEY", ""),
+    "ENDPOINT": os.getenv("MOMO_ENDPOINT", "https://test-payment.momo.vn/v2/gateway/api/create"),
+    "NOTIFY_URL": os.getenv("MOMO_NOTIFY_URL", ""),
+}
+
+# Cấu hình VNPay
+VNPAY_CONFIG = {
+    "TMN_CODE": os.getenv("VNPAY_TMN_CODE", ""),
+    "HASH_SECRET": os.getenv("VNPAY_HASH_SECRET", ""),
+    "ENDPOINT": os.getenv("VNPAY_ENDPOINT", "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"),
 }

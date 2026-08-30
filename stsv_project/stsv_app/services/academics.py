@@ -1,7 +1,7 @@
 from django.utils import timezone
 from .base import BaseService
 from stsv_app.models.users import User
-from stsv_app.models.academics import StudentCourse, CourseClass, Semester, Schedule, Subject, EducationProgram
+from stsv_app.models.academics import StudentCourse, CourseClass, Semester, Schedule, Subject, EducationProgram, StudentSemesterSummary
 from .exceptions import ResourceNotFoundError, ValidationError
 
 
@@ -84,3 +84,11 @@ class ScheduleService(BaseService):
                 course_class__lecturer=user.lecturer_profile
             ).select_related("course_class", "course_class__subject", "course_class__semester")
         return Schedule.objects.none()
+
+class StudentSemesterSummaryService(BaseService):
+    def get_my_summaries(self, user):
+        if hasattr(user, 'student_profile'):
+            return StudentSemesterSummary.objects.filter(
+                student=user.student_profile
+            ).select_related("semester")
+        return StudentSemesterSummary.objects.none()

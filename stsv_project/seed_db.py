@@ -889,8 +889,8 @@ def seed_users():
     # 2. Tạo 5 ORGOFFICER
     org_count = 0
     # - 2 tài khoản khoa
-    for faculty in faculties:
-        username = f"giaovu_{faculty.code.lower()}"
+    for i, faculty in enumerate(faculties):
+        username = "giaovu" if i == 0 else f"giaovu_{faculty.code.lower()}"
         user, created = User.objects.get_or_create(username=username)
         if created:
             user.set_password(PASSWORD)
@@ -910,7 +910,7 @@ def seed_users():
     # - 2 tài khoản CLB
     club_names = ["CLB Âm nhạc", "CLB IT"]
     for i, club_name in enumerate(club_names):
-        username = f"clb_{i + 1}"
+        username = "clb" if i == 0 else f"clb_{i + 1}"
         user, created = User.objects.get_or_create(username=username)
         if created:
             user.set_password(PASSWORD)
@@ -943,9 +943,14 @@ def seed_users():
     # 3. Tạo LECTURER (8 giảng viên, mỗi khoa 4)
     lecturer_count = 0
     lecturers_list = []
+    is_first_lecturer = True
     for faculty in faculties:
         for i in range(1, 5):  # 4 giảng viên
-            lecturer_id = f"GV_{faculty.code}_{i:02d}"
+            if is_first_lecturer:
+                lecturer_id = "gv"
+                is_first_lecturer = False
+            else:
+                lecturer_id = f"GV_{faculty.code}_{i:02d}"
             user, created = User.objects.get_or_create(username=lecturer_id)
             if created:
                 l, m, f = get_random_name_parts()
@@ -973,6 +978,7 @@ def seed_users():
     target_cohorts = Cohort.objects.filter(code__in=["K25", "K26"])
     majors = Major.objects.all()
     homeroom_classes = []
+    is_first_student = True
 
     for major in majors:
         for cohort in target_cohorts:
@@ -991,7 +997,11 @@ def seed_users():
 
             class_students = []
             for i in range(1, 6):  # 5 sinh viên
-                student_id = f"{cohort.code}_{major.code}_{i:02d}"
+                if is_first_student:
+                    student_id = "sv"
+                    is_first_student = False
+                else:
+                    student_id = f"{cohort.code}_{major.code}_{i:02d}"
                 user, created = User.objects.get_or_create(username=student_id)
                 if created:
                     l, m, f = get_random_name_parts()
@@ -1191,7 +1201,7 @@ def seed_events():
     cat_diengiang, _ = EventCategory.objects.get_or_create(name="Diễn giảng", defaults={"criterion": tc2})
 
     org_doanhoi = User.objects.get(username="doanhoi")
-    org_clb = User.objects.get(username="clb_1")
+    org_clb = User.objects.get(username="clb")
 
     now = timezone.now()
     events_data = [
@@ -1199,9 +1209,9 @@ def seed_events():
             "title": "Chiến dịch Xuân Tình Nguyện 2025",
             "category": cat_tinhnguyen,
             "organizer": org_doanhoi,
-            "start_time": now - timedelta(days=60),
-            "end_time": now - timedelta(days=58),
-            "max_participants": 100,
+            "start_time": now + timedelta(days=6),
+            "end_time": now + timedelta(days=8),
+            "max_participants": 20,
             "status": "APPROVED",
             "training_points": 10,
         },
@@ -1209,9 +1219,10 @@ def seed_events():
             "title": "Diễn giảng: Hành trang Sinh viên 5 Tốt",
             "category": cat_diengiang,
             "organizer": org_doanhoi,
-            "start_time": now - timedelta(days=40),
-            "end_time": now - timedelta(days=40) + timedelta(hours=2),
-            "max_participants": 300,
+            "start_time": now + timedelta(days=10),
+            "end_time": now + timedelta(days=10) + timedelta(hours=2),
+            "max_participants": 2,
+            "waiting_list_capacity": 10,
             "status": "APPROVED",
             "training_points": 8,
         },
@@ -1219,8 +1230,8 @@ def seed_events():
             "title": "Hội thảo AI & Tương lai",
             "category": cat_hocthuat,
             "organizer": org_clb,
-            "start_time": now - timedelta(days=30),
-            "end_time": now - timedelta(days=30) + timedelta(hours=3),
+            "start_time": now + timedelta(days=30),
+            "end_time": now + timedelta(days=30) + timedelta(hours=3),
             "max_participants": 200,
             "status": "APPROVED",
             "training_points": 5,
@@ -1239,6 +1250,7 @@ def seed_events():
                 "end_time": ed["end_time"],
                 "location": "Hội trường A",
                 "max_participants": ed["max_participants"],
+                "waiting_list_capacity": ed.get("waiting_list_capacity", 0),
                 "status": ed["status"],
                 "training_points": ed["training_points"],
             }
@@ -1252,17 +1264,41 @@ def seed_events():
                 expires_at=ed["end_time"]
             )
 
-    k25_students = StudentProfile.objects.filter(cohort__code="K25")
+    k25_students = list(StudentProfile.objects.filter(cohort__code="K25"))
     for ev in events_list:
-        participants = random.sample(list(k25_students), min(20, len(k25_students)))
+        if ev.title == "Diễn giảng: Hành trang Sinh viên 5 Tốt":
+            # Setup riêng kịch bản Hủy đăng ký / Danh sách chờ
+            sv_user = User.objects.get(username="sv")
+            # 1. Đăng ký 'sv' là 1 trong 2 người có vé chính thức
+            EventRegistration.objects.get_or_create(
+                event=ev, student=sv_user.student_profile,
+                defaults={"status": "REGISTERED", "is_checked_in": False}
+            )
+            # 2. Đăng ký người thứ 2 (để lấp đầy max_participants=2)
+            other_student = [s for s in k25_students if s.id != sv_user.student_profile.id][0]
+            EventRegistration.objects.get_or_create(
+                event=ev, student=other_student,
+                defaults={"status": "REGISTERED", "is_checked_in": False}
+            )
+            # 3. Thêm 3 người vào danh sách chờ
+            waitlist_students = [s for s in k25_students if s.id not in [sv_user.student_profile.id, other_student.id]][:3]
+            for i, st in enumerate(waitlist_students):
+                EventRegistration.objects.get_or_create(
+                    event=ev, student=st,
+                    defaults={"status": "WAITLIST", "queue_position": i + 1}
+                )
+            continue
+
+        participants = random.sample(k25_students, min(20, len(k25_students)))
         for st in participants:
+            is_sv = (st.user.username == "sv")
             EventRegistration.objects.get_or_create(
                 event=ev,
                 student=st,
                 defaults={
                     "status": "REGISTERED",
-                    "is_checked_in": True,
-                    "check_in_time": ev.start_time + timedelta(minutes=10)
+                    "is_checked_in": not is_sv,
+                    "check_in_time": None if is_sv else (ev.start_time + timedelta(minutes=10))
                 }
             )
     print("-> Đã hoàn tất tạo Sự kiện và Điểm danh.\n")
@@ -1396,10 +1432,16 @@ def seed_training_points_extra():
 
     # 1. Nộp minh chứng (PointProof)
     for st in k25_students[:5]:
+        # Cần lấy/tạo SemesterPointDetail trước
+        semester_point, _ = StudentSemesterPoint.objects.get_or_create(
+            student=st, semester=sem20251
+        )
+        point_detail, _ = SemesterPointDetail.objects.get_or_create(
+            semester_point=semester_point, criterion=tc6
+        )
+        
         PointProof.objects.get_or_create(
-            student=st,
-            semester=sem20251,
-            criterion=tc6,
+            point_detail=point_detail,
             activity_name="Đạt giải Nhất cuộc thi Sáng tạo sinh viên",
             defaults={
                 "status": "APPROVED",
@@ -1503,7 +1545,7 @@ def seed_support():
         reporter=admin,
         title="Wifi thư viện quá chậm",
         defaults={
-            "content": "Sinh viên không thể truy cập tài liệu được.",
+            "description": "Sinh viên không thể truy cập tài liệu được.",
             "priority": "HIGH",
             "status": "PROCESSING"
         }

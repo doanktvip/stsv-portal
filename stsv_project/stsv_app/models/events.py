@@ -15,11 +15,13 @@ class EventCategory(models.Model):
 # Thông tin chi tiết của sự kiện (thời gian, địa điểm, số điểm rèn luyện được cộng).
 class Event(models.Model):
     class Status(models.TextChoices):
+        DRAFT = "DRAFT", "Bản nháp"
         PENDING = "PENDING", "Chờ duyệt"
         APPROVED = "APPROVED", "Đã duyệt"
         REJECTED = "REJECTED", "Từ chối"
 
     title = models.CharField(max_length=255)
+    cover_image = models.ImageField(upload_to='events/covers/', blank=True, null=True)
     description = models.TextField()
     category = models.ForeignKey(EventCategory, on_delete=models.CASCADE)
     organizer = models.ForeignKey(

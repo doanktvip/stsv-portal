@@ -10,10 +10,11 @@ from stsv_app.serializers.users import (
     CustomTokenObtainPairSerializer,
     CustomTokenRefreshSerializer,
     ChangePasswordSerializer,
+    UserDeviceSerializer
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from stsv_app.services import UserService
-
+from stsv_app.models.users import UserDevice, User
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
@@ -57,6 +58,21 @@ class UserViewSet(viewsets.ViewSet):
         )
         
         return Response({"message": "Đổi mật khẩu thành công."})
+        
+    @action(methods=["post"], url_path="devices", detail=False)
+    def register_device(self, request):
+
+        serializer = UserDeviceSerializer(data=request.data)
+        if serializer.is_valid():
+            UserDevice.objects.update_or_create(
+                user=request.user,
+                device_os=serializer.validated_data.get("device_os"),
+                defaults={
+                    "fcm_token": serializer.validated_data.get("fcm_token")
+                }
+            )
+            return Response({"message": "Đăng ký thiết bị thành công."})
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LecturerViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
@@ -81,3 +97,27 @@ class OrgViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     filterset_fields = ["org_type", "status", "faculty"]
     search_fields = ["org_name"]
     ordering_fields = ["id", "org_name", "established_date"]
+
+class AdminAccountViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    queryset = User.objects.all().order_by("-date_joined")
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ["role", "is_active"]
+    search_fields = ["username", "email", "first_name", "last_name"]
+    ordering_fields = ["id", "username", "date_joined"]
+
+    @action(methods=["post"], detail=True, url_path="toggle-status")
+    def toggle_status(self, request, pk=None):
+        user = self.get_object()
+        if user == request.user:
+            return Response({"message": "Không thể tự khóa tài khoản của mình."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user.is_active = not user.is_active
+        user.save()
+        status_msg = "Mở khóa" if user.is_active else "Khóa"
+        return Response({
+            "status": "success",
+            "message": f"{status_msg} tài khoản thành công.", 
+            "is_active": user.is_active
+        })

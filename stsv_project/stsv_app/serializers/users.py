@@ -1,7 +1,7 @@
 from rest_framework import serializers, exceptions
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
-from stsv_app.models.users import StudentProfile, LecturerProfile, OrgProfile
+from stsv_app.models.users import StudentProfile, LecturerProfile, OrgProfile, UserDevice
 from rest_framework_simplejwt.serializers import (
     TokenObtainPairSerializer,
     TokenRefreshSerializer,
@@ -14,6 +14,11 @@ User = get_user_model()
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
+
+class UserDeviceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserDevice
+        fields = ['fcm_token', 'device_os']
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -39,7 +44,7 @@ class CustomTokenRefreshSerializer(TokenRefreshSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "username", "email", "role", "first_name", "last_name"]
+        fields = ["id", "username", "email", "role", "first_name", "last_name", "is_active"]
 
 
 class StudentProfileSerializer(serializers.ModelSerializer):

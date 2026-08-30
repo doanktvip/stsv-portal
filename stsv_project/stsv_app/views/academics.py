@@ -5,8 +5,8 @@ from stsv_app.paginations import MasterDataPaginator
 from stsv_app.permissions import IsStudentRole, IsAdminRole, IsLecturerRole
 from stsv_app.models.academics import EducationProgram, Subject, Semester
 from stsv_app.models.users import User
-from stsv_app.serializers.academics import EducationProgramSerializer, SubjectSerializer, SemesterSerializer, CourseClassSerializer, StudentCourseSerializer, ScheduleSerializer
-from stsv_app.services.academics import SemesterService, SubjectService, EducationProgramService, CourseClassService, StudentCourseService, ScheduleService
+from stsv_app.serializers.academics import EducationProgramSerializer, SubjectSerializer, SemesterSerializer, CourseClassSerializer, StudentCourseSerializer, ScheduleSerializer, StudentSemesterSummarySerializer
+from stsv_app.services.academics import SemesterService, SubjectService, EducationProgramService, CourseClassService, StudentCourseService, ScheduleService, StudentSemesterSummaryService
 
 
 class StudentEducationProgramViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
@@ -76,10 +76,21 @@ class ScheduleViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsStudentRole | IsLecturerRole]
 
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ["course_class__semester", "exact_date"]
+    filterset_fields = ["course_class__semester", "exact_date", "type"]
     search_fields = ["course_class__class_code", "course_class__subject__name"]
     ordering_fields = ["exact_date", "start_time"]
 
     def get_queryset(self):
         service = ScheduleService()
         return service.get_personal_schedules(self.request.user)
+
+class StudentSemesterSummaryViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    serializer_class = StudentSemesterSummarySerializer
+    permission_classes = [IsStudentRole]
+
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["semester"]
+
+    def get_queryset(self):
+        service = StudentSemesterSummaryService()
+        return service.get_my_summaries(self.request.user)

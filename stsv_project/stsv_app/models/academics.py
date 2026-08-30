@@ -19,6 +19,9 @@ class IntegrationSyncLog(models.Model):
     status = models.CharField(max_length=20, choices=Status.choices)
     error_details = models.JSONField(blank=True, null=True)
     synced_at = models.DateTimeField(auto_now_add=True)
+    updated_by = models.ForeignKey(
+        "stsv_app.User", on_delete=models.SET_NULL, null=True, blank=True
+    )
 
 
 # Cấu hình quy tắc đổi điểm từ thang 10 sang thang 4 và điểm chữ (A, B, C, D, F).
@@ -44,6 +47,9 @@ class GradeConversionRule(models.Model):
         validators=[MinValueValidator(0), MaxValueValidator(4)],
     )
     classification = models.CharField(max_length=20, choices=Classification.choices)
+    updated_by = models.ForeignKey(
+        "stsv_app.User", on_delete=models.SET_NULL, null=True, blank=True
+    )
 
 
 # Thông tin môn học (số tín chỉ, môn tiên quyết).

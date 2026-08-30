@@ -1,4 +1,5 @@
 from django.db import models
+from cloudinary.models import CloudinaryField
 
 
 # Các tiêu chí cộng/trừ điểm rèn luyện (VD: Tham gia NCKH được cộng 5đ).
@@ -6,6 +7,9 @@ class TrainingCriterion(models.Model):
     code = models.CharField(max_length=20, unique=True)
     name = models.CharField(max_length=255)
     max_points = models.IntegerField()
+    parent = models.ForeignKey(
+        'self', on_delete=models.CASCADE, null=True, blank=True, related_name='sub_criteria'
+    )
 
     def __str__(self):
         return self.name
@@ -71,11 +75,11 @@ class PointProof(models.Model):
         APPROVED = "APPROVED", "Đã duyệt"
         REJECTED = "REJECTED", "Từ chối"
 
-    student = models.ForeignKey("stsv_app.StudentProfile", on_delete=models.CASCADE)
-    semester = models.ForeignKey("stsv_app.Semester", on_delete=models.CASCADE)
-    criterion = models.ForeignKey(TrainingCriterion, on_delete=models.CASCADE)
+    point_detail = models.ForeignKey(
+        SemesterPointDetail, on_delete=models.CASCADE, related_name="proofs", null=True, blank=True
+    )
     activity_name = models.CharField(max_length=255)
-    file_url = models.FileField(upload_to="point_proofs/")
+    file_url = CloudinaryField("Minh chứng", folder="point_proofs", blank=True, null=True)
     status = models.CharField(
         max_length=20, choices=Status.choices, default=Status.PENDING
     )

@@ -28,7 +28,7 @@ class Fee(models.Model):
         return f"{self.title} - {self.amount}"
 
 
-# Giao dịch thanh toán của sinh viên (thanh toán qua VNPay, Momo, chuyển khoản,...).
+# Giao dịch thanh toán của sinh viên (thanh toán qua VNPay, MoMo).
 class Payment(models.Model):
     class Status(models.TextChoices):
         PENDING = "PENDING", "Chờ thanh toán"
@@ -38,7 +38,6 @@ class Payment(models.Model):
     class Method(models.TextChoices):
         VNPAY = "VNPAY", "VNPay"
         MOMO = "MOMO", "MoMo"
-        BANK_TRANSFER = "BANK_TRANSFER", "Chuyển khoản ngân hàng"
 
     class RefundStatus(models.TextChoices):
         NONE = "NONE", "Không"

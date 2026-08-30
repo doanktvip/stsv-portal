@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from stsv_app.models.academics import EducationProgram, Subject, Semester, CourseClass, StudentCourse, Schedule
+from stsv_app.models.academics import EducationProgram, Subject, Semester, CourseClass, StudentCourse, Schedule, StudentSemesterSummary
 
 class PrerequisiteSubjectSerializer(serializers.ModelSerializer):
     """Serializer lồng (nested) để hiển thị thông tin rút gọn của môn tiên quyết"""
@@ -73,4 +73,15 @@ class ScheduleSerializer(serializers.ModelSerializer):
             'id', 'course_class', 'class_code', 'subject_name', 'subject_code', 'semester_code',
             'type', 'type_display', 'day_of_week', 'exact_date', 'start_time', 'end_time', 
             'room', 'is_makeup_class'
+        ]
+
+class StudentSemesterSummarySerializer(serializers.ModelSerializer):
+    semester_code = serializers.CharField(source='semester.code', read_only=True)
+
+    class Meta:
+        model = StudentSemesterSummary
+        fields = [
+            'id', 'semester', 'semester_code', 
+            'semester_gpa_4', 'semester_earned_credits', 'semester_training_points', 'training_point_classification',
+            'cumulative_gpa_4', 'cumulative_earned_credits', 'cumulative_training_points'
         ]
