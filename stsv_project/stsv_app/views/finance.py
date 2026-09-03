@@ -2,12 +2,35 @@ from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from rest_framework.views import APIView
 from django.utils import timezone
+from django.http import HttpResponse
 from stsv_app.models.finance import Fee, Payment
 from stsv_app.serializers.finance import FeeSerializer, PaymentSerializer, PaymentCreateSerializer
 from stsv_app.permissions import IsStudentRole, IsAdminRole
 from stsv_app.services.payments.factory import PaymentFactory
 from django.db.models import Sum
+
+class MockRedirectView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request):
+        return_url = request.GET.get('return_url', '')
+        html = f"""
+        <html>
+            <head><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+            <body style="text-align:center; padding-top: 50px; font-family: sans-serif;">
+                <h3>Đang chuyển hướng về App...</h3>
+                <script>
+                    setTimeout(function() {{
+                        window.location.href = "{return_url}";
+                    }}, 1500);
+                </script>
+                <br>
+                <a href="{return_url}" style="padding: 10px 20px; background: #005BAA; color: white; text-decoration: none; border-radius: 8px;">Bấm vào đây nếu trình duyệt không tự chuyển</a>
+            </body>
+        </html>
+        """
+        return HttpResponse(html)
 
 class FeeViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = FeeSerializer
@@ -30,9 +53,6 @@ class PaymentViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.Ge
             return PaymentCreateSerializer
         return PaymentSerializer
 
-    def perform_create(self, serializer):
-        student_profile = self.request.user.student_profile
-        serializer.save(student=student_profile)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -49,13 +69,15 @@ class PaymentViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.Ge
             # Return URL cho Mobile (Sử dụng Deep link để app tự động bật lại khi thanh toán xong)
             return_url = request.data.get('return_url')
             if not return_url:
-                return_url = 'stsvapp://payment-return'
+                return_url = 'stsvapp://stsv/payment-return'
                 
+            mock_redirect_base = request.build_absolute_uri('/api/payments/mock-redirect/')
             payment_url = provider.generate_payment_url(
                 transaction_id=payment.transaction_id,
                 amount=float(payment.amount),
                 order_info=f"Thanh toan {payment.fee.title}",
-                return_url=return_url
+                return_url=return_url,
+                mock_redirect_base=mock_redirect_base
             )
             
             headers = self.get_success_headers(serializer.data)

@@ -6,10 +6,11 @@ class BaseRolePermission(IsAuthenticated):
     required_role = None
 
     def has_permission(self, request, view):
-        is_authenticated = super().has_permission(request, view)
-        if not is_authenticated:
+        has_base = super().has_permission(request, view)
+        if not has_base:
             return False
-
+        if request.user.role == "ADMIN":
+            return True
         return request.user.role == self.required_role
 
 

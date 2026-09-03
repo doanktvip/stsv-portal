@@ -10,7 +10,7 @@ from .views.users import (
 from .views.academics import StudentEducationProgramViewSet, SubjectViewSet, SemesterViewSet, CourseClassViewSet, \
     StudentCourseViewSet, ScheduleViewSet, StudentSemesterSummaryViewSet
 from .views.core import FacultyViewSet, MajorViewSet, CohortViewSet
-from .views.finance import FeeViewSet, PaymentViewSet, AdminFinanceViewSet
+from .views.finance import FeeViewSet, PaymentViewSet, AdminFinanceViewSet, MockRedirectView
 from .services.payments.webhooks import UnifiedWebhookView
 from .views.system import SystemConfigViewSet, UserNotificationViewSet
 from .views.support import ComplaintViewSet, FacilityReportViewSet
@@ -55,6 +55,7 @@ urlpatterns = [
 
     # Standalone Webhook cho các cổng thanh toán
     path("finance/webhook/<str:provider_name>/", UnifiedWebhookView.as_view(), name="finance-webhook"),
+    path("payments/mock-redirect/", MockRedirectView.as_view(), name="mock-redirect"),
 
     path("", include(router.urls)),
 ]

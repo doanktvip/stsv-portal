@@ -81,11 +81,6 @@ class EventViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, viewsets.Re
         service = EventService(request.user)
         events = service.get_event_suggestions()
         
-        page = self.paginate_queryset(events)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
         serializer = self.get_serializer(events, many=True)
         return Response(serializer.data)
 

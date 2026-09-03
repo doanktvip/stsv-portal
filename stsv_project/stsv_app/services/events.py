@@ -1,9 +1,11 @@
 from django.utils import timezone
 from .base import BaseService
-from stsv_app.models import Event, EventRegistration, CheckInSession, User, YouthUnionRecord
+from stsv_app.models import Event, EventRegistration, CheckInSession, User, YouthUnionRecord, Schedule
 from stsv_app.models.system import NotificationTemplate, UserNotification
 from stsv_app.services.push_notification import PushNotificationService
 from .exceptions import ValidationError
+from django.db.models import Q
+
 
 class EventService(BaseService):
     def get_events_for_user(self, base_qs):
@@ -171,6 +173,9 @@ class EventService(BaseService):
     def register_event(self, event):
         locked_event = Event.objects.select_for_update().get(id=event.id)
         
+        if locked_event.status != Event.Status.APPROVED:
+            raise ValidationError("Chỉ có thể đăng ký sự kiện đã được duyệt.")
+        
         student = self.user.student_profile
         
         current_participants = EventRegistration.objects.filter(
@@ -188,6 +193,34 @@ class EventService(BaseService):
                 raise ValidationError("Sự kiện đã đầy và danh sách chờ đã đầy.")
             reg_status = EventRegistration.Status.WAITLIST
             queue_position = current_waitlist + 1
+        else:
+            # Check overlapping events only if registering (not waitlist)
+            overlapping_events = EventRegistration.objects.filter(
+                student=student,
+                status=EventRegistration.Status.REGISTERED,
+                event__start_time__lt=locked_event.end_time,
+                event__end_time__gt=locked_event.start_time
+            ).exists()
+
+            if overlapping_events:
+                raise ValidationError("Không thể đăng ký do trùng lịch học hoặc sự kiện khác.")
+                
+            # Check overlapping academics schedule
+            event_date = locked_event.start_time.date()
+            event_start_time = locked_event.start_time.time()
+            event_end_time = locked_event.end_time.time()
+            event_weekday = locked_event.start_time.weekday() + 2 # 0=Monday -> 2=Thứ 2
+            
+            overlapping_schedules = Schedule.objects.filter(
+                course_class__studentcourse__student=student,
+                start_time__lt=event_end_time,
+                end_time__gt=event_start_time
+            ).filter(
+                Q(exact_date=event_date) | Q(exact_date__isnull=True, day_of_week=event_weekday)
+            ).exists()
+            
+            if overlapping_schedules:
+                raise ValidationError("Không thể đăng ký do trùng lịch học hoặc sự kiện khác.")
 
         reg = EventRegistration.objects.filter(event=locked_event, student=student).first()
         if reg:
@@ -211,7 +244,8 @@ class EventService(BaseService):
         
         attended_regs = EventRegistration.objects.filter(
             student=student_profile, 
-            is_checked_in=True
+            is_checked_in=True,
+            event__is_youth_union=True
         ).select_related('event')
         
         for reg in attended_regs:

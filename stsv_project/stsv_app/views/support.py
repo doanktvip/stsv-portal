@@ -13,6 +13,9 @@ class BaseSupportViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
+        if not user.is_authenticated:
+            return self.queryset.none()
+            
         qs = self.queryset.select_related('reporter', 'resolved_by')
         if user.role == "ADMIN":
             return qs

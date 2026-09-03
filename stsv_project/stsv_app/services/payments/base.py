@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 class BasePaymentProvider(ABC):
     @abstractmethod
-    def generate_payment_url(self, transaction_id: str, amount: float, order_info: str, return_url: str) -> str:
+    def generate_payment_url(self, transaction_id: str, amount: float, order_info: str, return_url: str, **kwargs) -> str:
         """
         Khởi tạo giao dịch.
         Trả về URL thanh toán.

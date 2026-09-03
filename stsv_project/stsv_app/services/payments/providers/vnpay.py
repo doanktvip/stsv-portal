@@ -1,15 +1,21 @@
 import hashlib
 import hmac
-import urllib.parse
+import urllib.parse as up
 from datetime import datetime
 from django.conf import settings
 from ..base import BasePaymentProvider
 
 class VNPayProvider(BasePaymentProvider):
-    def generate_payment_url(self, transaction_id: str, amount: float, order_info: str, return_url: str) -> str:
+    def generate_payment_url(self, transaction_id: str, amount: float, order_info: str, return_url: str, **kwargs) -> str:
         config = getattr(settings, 'VNPAY_CONFIG', {})
         if not config or not config.get('TMN_CODE'):
-            return f"https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?id={transaction_id}&amount={amount}"
+            # Giả lập trả về Deep Link thành công
+            safe_msg = up.quote("Giao dịch giả lập thành công")
+            target_url = f"{return_url}?vnp_ResponseCode=00&vnp_OrderInfo={safe_msg}"
+            mock_base = kwargs.get('mock_redirect_base')
+            if mock_base:
+                return f"{mock_base}?return_url={up.quote(target_url)}"
+            return target_url
 
         vnp_TmnCode = config.get('TMN_CODE', '')
         vnp_HashSecret = config.get('HASH_SECRET', '')
@@ -36,7 +42,7 @@ class VNPayProvider(BasePaymentProvider):
         for key, val in sorted(input_data.items()):
             if seq == 1:
                 query_string += "&"
-            query_string += f"{key}={urllib.parse.quote_plus(str(val))}"
+            query_string += f"{key}={up.quote_plus(str(val))}"
             seq = 1
 
         hash_value = hmac.new(
@@ -67,7 +73,7 @@ class VNPayProvider(BasePaymentProvider):
         for key, val in input_data.items():
             if seq == 1:
                 query_string += "&"
-            query_string += f"{key}={urllib.parse.quote_plus(str(val))}"
+            query_string += f"{key}={up.quote_plus(str(val))}"
             seq = 1
 
         my_hash = hmac.new(

@@ -37,6 +37,7 @@ ELASTICSEARCH_DSL = {
         'timeout': 30,
     },
 }
+ELASTICSEARCH_DSL_AUTOSYNC = False  # Tắt tạm thời để tránh lỗi không kết nối được ES khi test
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True") == "True"
@@ -99,6 +100,18 @@ MIDDLEWARE = [
 ]
 # Cấu hình cho MIDDLEWARE
 SECURE_SSL_REDIRECT = False
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+    "ngrok-skip-browser-warning",
+]
 CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = "stsv_project.urls"
@@ -216,3 +229,6 @@ VNPAY_CONFIG = {
     "HASH_SECRET": os.getenv("VNPAY_HASH_SECRET", ""),
     "ENDPOINT": os.getenv("VNPAY_ENDPOINT", "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"),
 }
+
+# Sử dụng Custom Test Runner để seed data 1 lần
+TEST_RUNNER = 'stsv_app.tests.runner.SeedRunner'

@@ -38,7 +38,10 @@ class UserNotificationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return UserNotification.objects.filter(user=self.request.user).order_by('-created_at')
+        user = self.request.user
+        if not user.is_authenticated:
+            return UserNotification.objects.none()
+        return UserNotification.objects.filter(user=user).order_by('-created_at')
 
     @action(detail=True, methods=['post'])
     def read(self, request, pk=None):
