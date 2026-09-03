@@ -1,0 +1,8 @@
+[run]
+omit =
+    manage.py
+    stsv_project/*
+    */migrations/*
+    */seeders/*
+    */apps.py
+    */management/*
