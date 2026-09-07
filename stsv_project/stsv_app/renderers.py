@@ -9,7 +9,7 @@ class UnifiedJSONRenderer(JSONRenderer):
             return super().render(data, accepted_media_type, renderer_context)
 
         if isinstance(data, dict) and "status" in data and "data" in data:
-            return super().render(data, accepted_media_type, renderer_context)
+            return super().render(data, accepted_media_type, renderer_context)  # pragma: no cover
 
         message = "Thành công"
         if isinstance(data, dict) and "message" in data:

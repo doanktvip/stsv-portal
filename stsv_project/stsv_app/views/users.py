@@ -2,19 +2,19 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status, permissions, mixins, filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from stsv_app.serializers.users import (
-    UserSerializer, StudentProfile, LecturerProfile, OrgProfile,
+from stsv_app.models import StudentProfile, OrgProfile
+from stsv_app.serializers import (
+    UserSerializer,
     StudentProfileSerializer,
-    LecturerProfileSerializer,
     OrgProfileSerializer,
     CustomTokenObtainPairSerializer,
     CustomTokenRefreshSerializer,
-    ChangePasswordSerializer,
-    UserDeviceSerializer
+    ChangePasswordSerializer
 )
+
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from stsv_app.services import UserService
-from stsv_app.models.users import UserDevice, User
+from stsv_app.services import UserService, ValidationError
+from stsv_app.models import User
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
@@ -37,8 +37,7 @@ class UserViewSet(viewsets.ViewSet):
 
         if isinstance(profile_or_user, StudentProfile):
             serializer = StudentProfileSerializer(profile_or_user)
-        elif isinstance(profile_or_user, LecturerProfile):
-            serializer = LecturerProfileSerializer(profile_or_user)
+
         elif isinstance(profile_or_user, OrgProfile):
             serializer = OrgProfileSerializer(profile_or_user)
         else:
@@ -59,30 +58,6 @@ class UserViewSet(viewsets.ViewSet):
         
         return Response({"message": "Đổi mật khẩu thành công."})
         
-    @action(methods=["post"], url_path="devices", detail=False)
-    def register_device(self, request):
-
-        serializer = UserDeviceSerializer(data=request.data)
-        if serializer.is_valid():
-            UserDevice.objects.update_or_create(
-                user=request.user,
-                device_os=serializer.validated_data.get("device_os"),
-                defaults={
-                    "fcm_token": serializer.validated_data.get("fcm_token")
-                }
-            )
-            return Response({"message": "Đăng ký thiết bị thành công."})
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class LecturerViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
-    queryset = LecturerProfile.objects.select_related("user", "faculty").all().order_by("id")
-    serializer_class = LecturerProfileSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ["faculty", "department"]
-    search_fields = ["lecturer_id", "full_name"]
-    ordering_fields = ["id", "lecturer_id", "full_name"]
 
 
 class OrgViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
@@ -107,17 +82,18 @@ class AdminAccountViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     search_fields = ["username", "email", "first_name", "last_name"]
     ordering_fields = ["id", "username", "date_joined"]
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.user_service = UserService()
+
     @action(methods=["post"], detail=True, url_path="toggle-status")
     def toggle_status(self, request, pk=None):
-        user = self.get_object()
-        if user == request.user:
-            return Response({"message": "Không thể tự khóa tài khoản của mình."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        user.is_active = not user.is_active
-        user.save()
-        status_msg = "Mở khóa" if user.is_active else "Khóa"
-        return Response({
-            "status": "success",
-            "message": f"{status_msg} tài khoản thành công.", 
-            "is_active": user.is_active
-        })
+        target_user = self.get_object()
+        try:
+            result = self.user_service.toggle_account_status(
+                target_user=target_user,
+                requester=request.user,
+            )
+            return Response({"status": "success", **result})
+        except ValidationError as e:
+            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)

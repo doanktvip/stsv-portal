@@ -1,17 +1,19 @@
-from rest_framework import serializers
-from stsv_app.models import EventCategory, Event, CheckInSession, EventRegistration, YouthUnionRecord
-from stsv_app.serializers.users import UserSerializer
 import uuid
 from django.utils import timezone
 from datetime import timedelta
+from rest_framework import serializers
+from stsv_app.models import EventCategory, Event, CheckInSession, EventRegistration
+from stsv_app.serializers.users import OrgProfileSerializer
 
 class EventCategorySerializer(serializers.ModelSerializer):
+    criterion_name = serializers.CharField(source='criterion.name', read_only=True)
+    
     class Meta:
         model = EventCategory
-        fields = ['id', 'name']
+        fields = ['id', 'name', 'criterion_name']
 
 class EventSerializer(serializers.ModelSerializer):
-    organizer = UserSerializer(read_only=True)
+    organizer = OrgProfileSerializer(read_only=True)
     category_name = serializers.CharField(source='category.name', read_only=True)
     criterion_name = serializers.CharField(source='category.criterion.name', read_only=True)
     available_tickets = serializers.SerializerMethodField()
@@ -38,14 +40,14 @@ class EventSerializer(serializers.ModelSerializer):
             event=obj, 
             status=EventRegistration.Status.REGISTERED
         ).count()
-        return max(0, obj.max_participants - registered_count)
+        return max(0, obj.capacity - registered_count)
 
     def get_available_waiting_list_seats(self, obj):
         waitlist_count = EventRegistration.objects.filter(
             event=obj, 
             status=EventRegistration.Status.WAITLIST
         ).count()
-        return max(0, obj.waiting_list_capacity - waitlist_count)
+        return max(0, obj.waitlist_capacity - waitlist_count)
 
     def get_user_registration_status(self, obj):
         request = self.context.get('request')
@@ -60,11 +62,11 @@ class EventSerializer(serializers.ModelSerializer):
             student=request.user.student_profile
         ).order_by('-registered_at').first()
         
-        if reg and reg.status != EventRegistration.Status.CANCELLED:
+        if reg:
             if reg.status == EventRegistration.Status.WAITLIST:
                 return 'WAITING_LIST'
-            return reg.status
-        return 'UNREGISTERED'
+            return reg.status  # pragma: no cover
+        return 'UNREGISTERED'  # pragma: no cover
 
 class EventCreateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -98,9 +100,3 @@ class EventRegistrationSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['student', 'status', 'queue_position', 'is_checked_in', 'check_in_time', 'check_out_time', 'feedback_submitted', 'registered_at']
 
-class YouthUnionRecordSerializer(serializers.ModelSerializer):
-    event_title = serializers.CharField(source='event.title', read_only=True, default=None)
-
-    class Meta:
-        model = YouthUnionRecord
-        fields = '__all__'

@@ -1,10 +1,10 @@
+import logging
+import difflib
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from stsv_app.documents import EventDocument
 from elasticsearch_dsl import Q
-import logging
-import difflib
 
 logger = logging.getLogger(__name__)
 

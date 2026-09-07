@@ -2,10 +2,9 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.response import Response
 from stsv_app.exceptions import custom_exception_handler
-from stsv_app.services.exceptions import (
+from stsv_app.services import (
     ServiceError,
     ResourceNotFoundError,
-    ValidationError,
     PermissionDeniedError,
 )
 import unittest.mock

@@ -1,6 +1,6 @@
 from django.db import transaction
 from typing import Optional
-from stsv_app.models.users import User
+from stsv_app.models import User
 
 
 class BaseService:

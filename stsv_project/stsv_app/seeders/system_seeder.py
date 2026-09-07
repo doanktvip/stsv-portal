@@ -1,9 +1,9 @@
+import random
 from django.utils import timezone
-from stsv_app.models.system import SystemConfig, NotificationTemplate, UserNotification
-from stsv_app.models.users import User
+from stsv_app.models import SystemConfig, NotificationTemplate, UserNotification, User
 
 def seed_system():
-    print("--- Seeding System Data ---")
+    print("--- Nạp Dữ Liệu Cấu Hình Hệ Thống & Thông Báo ---")
     now = timezone.now()
     user = User.objects.first()
     if not user:
@@ -11,21 +11,30 @@ def seed_system():
         
     SystemConfig.objects.get_or_create(key="maintenance_mode", defaults={"value": "false", "description": "Bật tắt bảo trì", "updated_by": user})
     
-    tmpl, _ = NotificationTemplate.objects.get_or_create(
-        title="Test thông báo",
-        defaults={
-            "sender": user,
-            "message": "Đây là thông báo test",
-            "type": NotificationTemplate.Type.GENERAL
-        }
-    )
+    templates_to_create = []
+    for t_choice in NotificationTemplate.Type.choices:
+        t_type = t_choice[0]
+        tmpl, _ = NotificationTemplate.objects.get_or_create(
+            title=f"Test thông báo {t_choice[1]}",
+            defaults={
+                "sender": user,
+                "message": f"Đây là thông báo test loại {t_type}",
+                "type": t_type
+            }
+        )
+        templates_to_create.append(tmpl)
 
-    UserNotification.objects.get_or_create(
-        user=user,
-        template=tmpl,
-        defaults={
-            "is_read": False,
-        }
-    )
+    notifications_to_create = []
+    for tmpl in templates_to_create:
+        if not UserNotification.objects.filter(user=user, template=tmpl).exists():
+            notifications_to_create.append(UserNotification(
+                user=user,
+                template=tmpl,
+                is_read=random.choice([True, False])
+            ))
+            
+    if notifications_to_create:
+        UserNotification.objects.bulk_create(notifications_to_create)
 
-    print("System data seeded successfully.")
+    print("Nạp dữ liệu hệ thống thành công.")
+

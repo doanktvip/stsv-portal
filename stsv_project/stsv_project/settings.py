@@ -27,9 +27,6 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY")
 
-# Push Notification Service
-FIREBASE_CREDENTIALS = os.getenv("FIREBASE_CREDENTIALS")
-
 # Elasticsearch Configuration
 ELASTICSEARCH_DSL = {
     'default': {
@@ -74,6 +71,8 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 10,
     "DEFAULT_RENDERER_CLASSES": [
         "stsv_app.renderers.UnifiedJSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
@@ -212,22 +211,6 @@ SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {
         "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}
     }
-}
-
-# Cấu hình MoMo
-MOMO_CONFIG = {
-    "PARTNER_CODE": os.getenv("MOMO_PARTNER_CODE", ""),
-    "ACCESS_KEY": os.getenv("MOMO_ACCESS_KEY", ""),
-    "SECRET_KEY": os.getenv("MOMO_SECRET_KEY", ""),
-    "ENDPOINT": os.getenv("MOMO_ENDPOINT", "https://test-payment.momo.vn/v2/gateway/api/create"),
-    "NOTIFY_URL": os.getenv("MOMO_NOTIFY_URL", ""),
-}
-
-# Cấu hình VNPay
-VNPAY_CONFIG = {
-    "TMN_CODE": os.getenv("VNPAY_TMN_CODE", ""),
-    "HASH_SECRET": os.getenv("VNPAY_HASH_SECRET", ""),
-    "ENDPOINT": os.getenv("VNPAY_ENDPOINT", "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"),
 }
 
 # Sử dụng Custom Test Runner để seed data 1 lần

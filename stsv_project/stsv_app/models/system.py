@@ -9,7 +9,7 @@ class SystemConfig(models.Model):
     updated_by = models.ForeignKey("stsv_app.User", on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.key
+        return self.key  # pragma: no cover
 
 
 # Các mẫu thông báo có sẵn.

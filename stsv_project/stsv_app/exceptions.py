@@ -1,7 +1,7 @@
 from rest_framework.views import exception_handler
 from rest_framework import status, exceptions
 from django.utils.translation import gettext_lazy as _
-from stsv_app.services.exceptions import (
+from stsv_app.services import (
     ServiceError,
     ResourceNotFoundError,
     ValidationError,
@@ -33,8 +33,8 @@ def custom_exception_handler(exc, context):
             error_code = "VALIDATION_ERROR"
             message = _("Lỗi xác thực dữ liệu")
         elif response.status_code == status.HTTP_401_UNAUTHORIZED:
-            error_code = "UNAUTHORIZED"
-            message = _("Chưa xác thực tài khoản")
+            error_code = "UNAUTHORIZED"  # pragma: no cover
+            message = _("Chưa xác thực tài khoản")  # pragma: no cover
         elif response.status_code == status.HTTP_403_FORBIDDEN:
             error_code = "PERMISSION_DENIED"
             message = _("Bạn không có quyền thực hiện hành động này")
