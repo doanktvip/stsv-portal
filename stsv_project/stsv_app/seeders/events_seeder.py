@@ -1,32 +1,44 @@
-from django.utils import timezone
-from datetime import timedelta
 import random
 import uuid
-from stsv_app.models.events import EventCategory, Event, CheckInSession, EventRegistration
-from stsv_app.models.users import OrgProfile, StudentProfile
-from stsv_app.models.training_points import TrainingCriterion
+from django.utils import timezone
+from datetime import timedelta
+from stsv_app.models import EventCategory, Event, CheckInSession, EventRegistration, OrgProfile, StudentProfile, TrainingCriterion
 
 
 def seed_events(num_events=20):
-    print("--- Seeding Events Data ---")
+    print("--- Nạp Dữ Liệu Sự Kiện ---")
     now = timezone.now()
     
-    criterion = TrainingCriterion.objects.first()
-    if not criterion:
-        criterion, _ = TrainingCriterion.objects.get_or_create(code="HTKH", defaults={"name": "Hội thảo KH", "max_points": 10})
-
-    cat, _ = EventCategory.objects.get_or_create(name="Hội thảo khoa học", defaults={"criterion": criterion})
+    # Xóa sự kiện cũ để dọn dẹp
+    Event.objects.all().delete()
     
+    cats_data = [
+        ("Hội thảo khoa học", "Điều 1"),
+        ("Hoạt động tình nguyện", "Điều 4"),
+        ("Văn hóa, Văn nghệ", "Điều 3"),
+        ("Giao lưu quốc tế", "Điều 3"),
+    ]
+    
+    categories = []
+    for c_name, c_crit in cats_data:
+        criterion, _ = TrainingCriterion.objects.get_or_create(name=c_crit)
+        cat, _ = EventCategory.objects.get_or_create(name=c_name, defaults={"criterion": criterion})
+        if cat.criterion != criterion:
+            cat.criterion = criterion
+            cat.save()
+        categories.append(cat)
+        
     orgs = list(OrgProfile.objects.all())
     students = list(StudentProfile.objects.all())
     if not orgs or not students:
-        print("Missing Orgs or Students. Skipping events.")
+        print("Thiếu thông tin Ban tổ chức hoặc Sinh viên. Bỏ qua nạp sự kiện.")
         return
 
     events_to_create = []
     
     # Generate bulk events
-    print(f"Seeding {num_events} Events...")
+    print(f"Đang nạp {num_events} Sự kiện...")
+
     for i in range(num_events):
         org = random.choice(orgs)
         # Deterministic status to cover all cases
@@ -40,12 +52,14 @@ def seed_events(num_events=20):
         events_to_create.append(Event(
             title=f"Sự kiện {random.randint(100, 999)}",
             description="Đây là sự kiện mẫu được tạo tự động.",
-            category=cat,
-            organizer=org.user,
+            category=random.choice(categories),
+            organizer=org,
             start_time=start_time,
             end_time=end_time,
             location=f"Hội trường {random.choice(['A', 'B', 'C'])}",
-            max_participants=random.randint(50, 500),
+            capacity=random.randint(50, 100),
+            waitlist_capacity=random.randint(10, 50),
+            point_reward=random.randint(3, 5),
             status=status,
             cover_image="https://dummyimage.com/600x400/000/fff.jpg&text=Event"
         ))
@@ -70,12 +84,11 @@ def seed_events(num_events=20):
             # Register 5-15 random students
             for student in random.sample(students, k=min(len(students), random.randint(5, 15))):
                 if not EventRegistration.objects.filter(student=student, event=event).exists():
-                    is_checked_in = random.choice([True, False])
+                    status = random.choice(EventRegistration.Status.choices)[0]
                     registrations_to_create.append(EventRegistration(
                         student=student,
                         event=event,
-                        status=EventRegistration.Status.REGISTERED,
-                        is_checked_in=is_checked_in
+                        status=status,
                     ))
                     
     if checkins_to_create:
@@ -83,4 +96,5 @@ def seed_events(num_events=20):
     if registrations_to_create:
         EventRegistration.objects.bulk_create(registrations_to_create)
 
-    print("Events data seeded successfully.")
+    print("Nạp dữ liệu sự kiện thành công.")
+

@@ -66,6 +66,58 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="http" />
         </intent>
+        <!-- Banking App Packages & URL Schemes for App-to-App payment -->
+        <package android:name="com.mbmobile" />
+        <package android:name="com.VCB" />
+        <package android:name="vn.com.techcombank.bb.app" />
+        <package android:name="com.vietinbank.ipay" />
+        <package android:name="com.vnpay.bidv" />
+        <package android:name="com.tpb.mb.gprsandroid" />
+        <package android:name="com.vnpay.vpbankonline" />
+        <package android:name="mobile.acb.com.vn" />
+        <package android:name="com.vnpay.Agribank3g" />
+        <package android:name="com.vnpay.sacombank" />
+        <package android:name="com.mservice.momotransfer" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="mbmobile" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="vcb" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="tcbmobile" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="vietinbankpay" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="bidvsmartbanking" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="tpbank" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="vpbankneo" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="acbone" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="agribank" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="sacombankpay" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="momo" />

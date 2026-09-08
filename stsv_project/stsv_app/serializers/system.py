@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from stsv_app.models.system import SystemConfig, NotificationTemplate, UserNotification
+from stsv_app.models import SystemConfig, NotificationTemplate, UserNotification
 
 class SystemConfigSerializer(serializers.ModelSerializer):
     updated_by_name = serializers.CharField(source='updated_by.get_full_name', read_only=True)

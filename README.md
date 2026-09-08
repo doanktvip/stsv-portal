@@ -1,122 +1,117 @@
-# stsv-portal
+# 🎓 Hệ thống Sổ tay Sinh viên (Student Handbook App)
 
-## Hướng dẫn cài đặt và khởi chạy (Dành cho Windows)
+Dự án Hệ thống Sổ tay Sinh viên là một ứng dụng di động hỗ trợ sinh viên số hóa các hoạt động ngoại khóa. Tính năng cốt lõi của ứng dụng là **Tự động theo dõi và tính toán Điểm rèn luyện**, tích hợp thuật toán "Chặn điểm trần" theo đúng quy chế nhà trường và hỗ trợ **Điểm danh sự kiện nhanh chóng bằng mã QR**.
+
+---
+
+## 🏗️ Kiến trúc Hệ thống
+
+Dự án được chia thành 2 phân hệ chính:
+- **Backend (`stsv_project`)**: Xây dựng bằng Python, Django MVT và Django REST Framework. Sử dụng hệ quản trị CSDL MySQL và Elasticsearch.
+- **Frontend Mobile (`stsv_app_mobile`)**: Ứng dụng di động đa nền tảng (Android/iOS) được xây dựng bằng Flutter, ứng dụng kiến trúc Riverpod để quản lý State.
+
+---
+
+## ⚙️ Yêu cầu Hệ thống (Prerequisites)
+
+Trước khi bắt đầu cài đặt, đảm bảo máy tính của bạn đã được thiết lập:
+- **Python 3.10+**
+- **Flutter SDK 3.x**
+- Hệ quản trị CSDL MySQL (hoặc sử dụng qua XAMPP/Docker)
+
+---
+
+## 🚀 I. Hướng dẫn cài đặt Backend (Django API)
+
+Các bước dưới đây giúp bạn khởi chạy máy chủ API nội bộ (Localhost). Hãy mở Terminal (PowerShell hoặc CMD) tại thư mục gốc của dự án.
 
 ### 1. Kích hoạt môi trường ảo (Virtual Environment)
-Môi trường ảo của dự án được đặt trong thư mục `venv`. Để kích hoạt, hãy mở terminal (Powershell hoặc CMD) tại thư mục gốc của dự án (`d:\stsv-portal`) và chạy lệnh sau:
+Môi trường ảo giúp cách ly các thư viện của dự án để tránh xung đột. Chạy lệnh sau:
 
-**Nếu dùng Powershell:**
+**Dành cho PowerShell (Windows):**
 ```powershell
 .\venv\Scripts\Activate.ps1
 ```
-*(Lưu ý: Nếu gặp lỗi Execution Policy, hãy chạy lệnh `Set-ExecutionPolicy Unrestricted -Scope CurrentUser` trước)*
+*(Mẹo: Nếu gặp lỗi quyền thực thi "Execution Policy", hãy mở PowerShell bằng quyền Administrator và chạy lệnh: `Set-ExecutionPolicy Unrestricted -Scope CurrentUser`)*
 
-**Nếu dùng Command Prompt (CMD):**
+**Dành cho Command Prompt (CMD):**
 ```cmd
 .\venv\Scripts\activate.bat
 ```
 
----
-
-### 2. Chạy ứng dụng
-Sau khi kích hoạt môi trường ảo thành công (có chữ `(venv)` ở đầu dòng lệnh), di chuyển vào thư mục code và khởi động server:
-```powershell
-cd stsv_project
-python manage.py runserver
-```
-
----
-
-### 3. Cập nhật cơ sở dữ liệu
-Bất cứ khi nào có thay đổi về Model, hãy chạy các lệnh sau để đồng bộ xuống Database:
+### 2. Khởi tạo Cơ sở Dữ liệu (Migrations)
+Đảm bảo bạn đã tạo Database trong MySQL theo cấu hình tại file `.env`. Sau đó, áp dụng cấu trúc CSDL từ code xuống database thực tế:
 ```powershell
 cd stsv_project
 python manage.py makemigrations
 python manage.py migrate
 ```
 
----
-
-### 4. Nạp dữ liệu ảo (Seeding)
-Dùng để tạo dữ liệu mẫu cho môi trường phát triển. **Chỉ chạy được khi `DEBUG=True`.**
-
+### 3. Nạp dữ liệu giả lập (Seeding)
+Hệ thống cung cấp sẵn lệnh tự động nạp dữ liệu mẫu (Quy chế điểm, Sự kiện, Sinh viên, Giao dịch) giúp bạn có ngay dữ liệu để test app.
+*(Lưu ý: Chỉ khả dụng khi biến cấu hình môi trường `DEBUG=True`)*
 ```powershell
-cd stsv_project
-
-# Nạp dữ liệu với số lượng mặc định (50 sinh viên, 20 sự kiện)
+# Nạp dữ liệu mặc định (50 sinh viên, 20 sự kiện)
 python manage.py seed
 
-# Xoá toàn bộ dữ liệu cũ rồi nạp lại từ đầu
-python manage.py seed --clear
-
-# Tuỳ chỉnh số lượng sinh viên và sự kiện
+# Tuỳ chỉnh số lượng nạp (100 sinh viên, 50 sự kiện)
 python manage.py seed --students 100 --events 50
 
-# Kết hợp: xoá sạch + nạp lại với số lượng tuỳ chỉnh
-python manage.py seed --clear --students 100 --events 50
+# Xoá trắng toàn bộ dữ liệu cũ và nạp lại từ đầu
+python manage.py seed --clear
 ```
 
-| Tham số | Mặc định | Mô tả |
-|---------|----------|-------|
-| `--clear` | _(không có)_ | Xoá toàn bộ dữ liệu trước khi nạp |
-| `--students` | `50` | Số lượng sinh viên cần tạo |
-| `--events` | `20` | Số lượng sự kiện cần tạo |
+### 4. Khởi chạy Máy chủ (Run Server)
+```powershell
+python manage.py runserver
+```
+🎉 **Thành công!** Máy chủ API lúc này sẽ hoạt động tại địa chỉ: `http://127.0.0.1:8000/`
 
 ---
 
-## Lệnh Test & Kiểm tra độ phủ code (Coverage)
+## 📱 II. Hướng dẫn cài đặt Frontend (Flutter Mobile App)
 
-> Tất cả lệnh dưới đây chạy từ thư mục `stsv_project` với môi trường ảo đã được kích hoạt.
-
-### 5. Chạy test
-
+### 1. Cài đặt thư viện Dart
+Mở một cửa sổ Terminal **mới** (không tắt terminal đang chạy Backend), trỏ vào thư mục ứng dụng di động và tải thư viện:
 ```powershell
-cd stsv_project
+cd stsv_app_mobile
+flutter pub get
+```
 
-# Chạy toàn bộ test
+### 2. Khởi chạy Ứng dụng
+Đảm bảo bạn đã bật máy ảo (Android Emulator / iOS Simulator) hoặc đã cắm cáp kết nối điện thoại vật lý vào máy tính:
+```powershell
+flutter run
+```
+
+---
+
+## 🧪 III. Kiểm thử và Độ phủ Mã nguồn (Testing & Coverage)
+
+*(Tài liệu này dành cho lập trình viên Backend)*
+
+Đảm bảo bạn đã kích hoạt môi trường ảo (`venv`) và đang đứng tại thư mục `stsv_project`.
+
+### 1. Chạy Unit Test
+Hệ thống sở hữu bộ Unit Test hoàn chỉnh giúp bảo vệ tính toàn vẹn của logic.
+```powershell
+# Chạy toàn bộ Test Case
 python manage.py test
 
-# Chạy test với output chi tiết
+# Chạy Test Case và hiển thị chi tiết nguyên nhân lỗi (nếu có)
 python manage.py test --verbosity=2
 
-# Chỉ chạy test của một app cụ thể
+# Chỉ định chạy test cho thư mục app cụ thể
 python manage.py test stsv_app
-
-# Chỉ chạy một file test cụ thể
-python manage.py test stsv_app.tests.test_momo
-
-# Chỉ chạy một test case cụ thể
-python manage.py test stsv_app.tests.test_momo.MoMoProviderTestCase.test_generate_payment_url_success
 ```
 
----
-
-### 6. Đo độ phủ code (Coverage)
-
+### 2. Kiểm tra Độ phủ Mã nguồn (Test Coverage)
+Đo lường tỉ lệ code đã được kiểm thử để đảm bảo độ tin cậy của ứng dụng (Hiện tại dự án đạt chuẩn **100% Coverage**):
 ```powershell
-cd stsv_project
-
-# Chạy toàn bộ test + đo coverage, in báo cáo ra terminal (hay dùng nhất)
+# 1. Chạy kiểm thử đồng thời thu thập dữ liệu độ phủ, in kết quả ra Terminal
 coverage run manage.py test && coverage report -m
 
-# Tạo báo cáo HTML (mở file htmlcov/index.html bằng trình duyệt để xem trực quan)
+# 2. Xuất báo cáo HTML trực quan (để xem chi tiết code cover từng dòng)
 coverage html
-
-# Chỉ chạy coverage cho một số file test cụ thể
-coverage run manage.py test stsv_app.tests.test_momo stsv_app.tests.test_vnpay
-
-# Xem lại báo cáo lần chạy gần nhất (không chạy lại test)
-coverage report
 ```
-
-> **Cấu hình coverage** nằm tại [`stsv_project/.coveragerc`](./stsv_project/.coveragerc).  
-> Các thư mục tự động bị loại trừ: `migrations/`, `seeders/`, `manage.py`, `*/apps.py`, `*/management/*`.
-
----
-
-### 7. Kết quả mục tiêu
-
-| Chỉ số | Mục tiêu |
-|--------|----------|
-| Tests passed | ✅ 162/162 (0 failures) |
-| Code coverage | ✅ 100% |
+*(Mẹo: Mở file `htmlcov/index.html` bằng trình duyệt web để xem giao diện báo cáo HTML)*

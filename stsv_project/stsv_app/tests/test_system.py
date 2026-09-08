@@ -1,7 +1,7 @@
 from rest_framework import status
 from django.urls import reverse
-from stsv_app.tests.base import BaseAPITestCase
-from stsv_app.models.system import SystemConfig, UserNotification, NotificationTemplate
+from .base import BaseAPITestCase
+from stsv_app.models import SystemConfig, UserNotification, NotificationTemplate
 
 class SystemConfigAPITestCase(BaseAPITestCase):
     def setUp(self):

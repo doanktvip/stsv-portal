@@ -43,3 +43,14 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase Configs
+google-services.json
+GoogleService-Info.plist
+
+# AI & Editor Configs
+.trellis/
+.claude/
+.cursor/
+.agents/
+AGENTS.md

@@ -1,14 +1,31 @@
 from rest_framework import status
 from django.urls import reverse
-from stsv_app.tests.base import BaseAPITestCase
-from stsv_app.models.finance import Fee, Payment
+from .base import BaseAPITestCase
+from stsv_app.models import FeeCampaign, Payment
 
-class FeeAPITestCase(BaseAPITestCase):
-    def test_get_fees(self):
-        url = reverse('stsv_app:fee-list')
+class FeeCampaignAPITestCase(BaseAPITestCase):
+    def test_get_campaigns(self):
+        url = reverse('stsv_app:fee-campaign-list')
         self.client.force_authenticate(user=self.student)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_campaign(self):
+        url = reverse('stsv_app:fee-campaign-list')
+        self.client.force_authenticate(user=self.bancansu)
+        data = {
+            "title": "Quỹ lớp Test",
+            "description": "Mô tả test",
+            "amount": 50000.0,
+            "is_mandatory": True,
+            "bank_name": "MBBank",
+            "bank_account_number": "0896719575",
+            "bank_account_name": "NGUYEN VAN A"
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn("id", response.data)
+        self.assertEqual(response.data["title"], "Quỹ lớp Test")
 
 
 class PaymentAPITestCase(BaseAPITestCase):
@@ -18,70 +35,25 @@ class PaymentAPITestCase(BaseAPITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_create_payment_momo(self):
+    def test_create_payment_vietqr(self):
         url = reverse('stsv_app:payment-list')
         self.client.force_authenticate(user=self.student)
-        # Lấy một khoản phí bất kỳ để thanh toán
-        fee = Fee.objects.first()
+        campaign = FeeCampaign.objects.first()
         data = {
-            "fee": fee.id,
-            "amount": float(fee.amount),
-            "payment_method": Payment.Method.MOMO,
-            "return_url": "stsvapp://test-return"
+            "campaign": campaign.id,
+            "amount": float(campaign.amount),
+            "payment_method": Payment.PaymentMethod.VIETQR
         }
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertIn("payment_url", response.data)
-
-    def test_refund_payment_success(self):
-        self.client.force_authenticate(user=self.student)
-        # Tìm một giao dịch SUCCESS của sinh viên này
-        payment = Payment.objects.filter(
-            student=self.student.student_profile, 
-            status=Payment.Status.SUCCESS,
-            refund_status=Payment.RefundStatus.NONE
-        ).first()
-        
-        url = reverse('stsv_app:payment-refund', kwargs={'pk': payment.id})
-        response = self.client.post(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-    def test_refund_payment_invalid_status(self):
-        self.client.force_authenticate(user=self.student)
-        # Tự tạo một payment PENDING để test không phụ thuộc vào seeder
-        fee = Fee.objects.first()
-        payment = Payment.objects.create(
-            student=self.student.student_profile,
-            fee=fee,
-            amount=fee.amount,
-            status=Payment.Status.PENDING,
-            payment_method=Payment.Method.MOMO,
-            transaction_id="TEST-PENDING-REFUND-001",
-            refund_status=Payment.RefundStatus.NONE,
-        )
-
-        url = reverse('stsv_app:payment-refund', kwargs={'pk': payment.id})
-        response = self.client.post(url)
-        # Bắt buộc phải SUCCESS mới được refund, nên sẽ trả về 400
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("vietqr_url", response.data)
 
 
-class AdminFinanceAPITestCase(BaseAPITestCase):
-    def test_overview(self):
-        url = reverse('stsv_app:admin-finance-overview')
+class ClassFinanceManagementAPITestCase(BaseAPITestCase):
+    def test_class_status(self):
+        campaign = FeeCampaign.objects.first()
+        url = reverse('stsv_app:class-finance-management-class-status', kwargs={'pk': campaign.id})
         self.client.force_authenticate(user=self.admin)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("total_revenue", response.data)
-
-    def test_revenue_by_type(self):
-        url = reverse('stsv_app:admin-finance-revenue-by-type')
-        self.client.force_authenticate(user=self.admin)
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-    def test_recent_transactions(self):
-        url = reverse('stsv_app:admin-finance-recent-transactions')
-        self.client.force_authenticate(user=self.admin)
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("students", response.data)
