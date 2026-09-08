@@ -48,8 +48,6 @@ dependencies:
   qr_flutter: ^4.1.0
   mobile_scanner: ^5.2.3
   url_launcher: ^6.3.2
-  firebase_core: ^4.13.0
-  firebase_messaging: ^16.5.0
   image_picker: ^1.2.3
   flutter_animate: ^4.5.2
   shimmer: ^3.0.0

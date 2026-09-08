@@ -26,6 +26,22 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>mbmobile</string>
+		<string>vcb</string>
+		<string>tcbmobile</string>
+		<string>vietinbankpay</string>
+		<string>bidvsmartbanking</string>
+		<string>tpbank</string>
+		<string>vpbankneo</string>
+		<string>acbone</string>
+		<string>agribank</string>
+		<string>sacombankpay</string>
+		<string>momo</string>
+		<string>https</string>
+		<string>http</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>Ứng dụng cần quyền truy cập Camera để quét mã QR điểm danh sự kiện.</string>
 	<key>UIApplicationSceneManifest</key>

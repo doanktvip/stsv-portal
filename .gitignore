@@ -227,7 +227,9 @@ elasticsearch*/
 .idea/
 .cursor/
 .claude/
+AGENTS.md
 
+ngrok.exe
 # Temp Files
-docx_content.txt
+docx.txt
 read_docx.py
