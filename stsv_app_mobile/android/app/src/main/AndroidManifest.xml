@@ -43,6 +43,8 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+            
+        <!-- Đã xóa com.google.mlkit.vision.DEPENDENCIES vì sử dụng bundled model -->
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
